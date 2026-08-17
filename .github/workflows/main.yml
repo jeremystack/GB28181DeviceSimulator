@@ -15,21 +15,38 @@ jobs:
 
     - name: Build with MSBuild
       run: |
-        # 进入真正的源码目录进行编译
-        cd GB28181DeviceSimulator\GB28181DeviceSimulator
+        $srcDir = "GB28181DeviceSimulator\GB28181DeviceSimulator"
+        
+        Push-Location $srcDir
         msbuild GB28181DeviceSimulator.vcxproj `
           /p:Configuration=Release `
-          /p:Platform=x64 `
-          /p:OutputPath=..\..\Release_x64
+          /p:Platform=x64
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "MSBuild failed with exit code $LASTEXITCODE"
+            exit $LASTEXITCODE
+        }
+        Pop-Location
+        
+        # MSBuild 实际输出位置（项目默认 x64\Release）
+        $buildOutDir = Join-Path $srcDir "x64\Release"
+        $finalDir = "$env:GITHUB_WORKSPACE\Release_x64"
+        
+        New-Item -ItemType Directory -Force -Path $finalDir | Out-Null
+        
+        # 复制编译产物（注意实际文件名是 EasyGBDSimulator.exe）
+        Copy-Item "$buildOutDir\EasyGBDSimulator.exe" $finalDir\ -Force
+        if (Test-Path "$buildOutDir\GB28181DeviceSimulator.pdb") {
+            Copy-Item "$buildOutDir\GB28181DeviceSimulator.pdb" $finalDir\ -Force
+        }
+        
+        Write-Host "=== Copied build output ==="
+        Get-ChildItem $finalDir | Select-Object Name, Length
 
     - name: Copy runtime DLLs and configs
       run: |
         $srcDir = "GB28181DeviceSimulator\GB28181DeviceSimulator"
-        $outDir = "Release_x64"
+        $outDir = "$env:GITHUB_WORKSPACE\Release_x64"
         
-        New-Item -ItemType Directory -Force -Path $outDir
-        
-        # 复制所有运行时依赖 DLL
         $dllFiles = @(
             "libEasyGBD.dll",
             "libEasyStreamClient.dll",
@@ -53,16 +70,26 @@ jobs:
                 Copy-Item $fullPath $outDir\ -Force
                 Write-Host "Copied: $dll"
             } else {
-                Write-Host "WARNING: $dll not found"
+                Write-Host "WARNING: $dll not found at $fullPath"
             }
         }
         
-        # 复制配置和视频文件
-        Copy-Item "$srcDir\EasyDarwin.mp4" $outDir\ -Force
-        Copy-Item "$srcDir\GB28181Device.xml" $outDir\ -Force
+        @("EasyDarwin.mp4", "GB28181Device.xml") | ForEach-Object {
+            $fp = Join-Path $srcDir $_
+            if (Test-Path $fp) {
+                Copy-Item $fp $outDir\ -Force
+                Write-Host "Copied: $_"
+            } else {
+                Write-Host "WARNING: $_ not found"
+            }
+        }
+        
+        Write-Host "`n=== Final Release_x64 contents ==="
+        Get-ChildItem $outDir | Select-Object Name, Length | Format-Table -AutoSize
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: EasyGBDSimulator
-        path: Release_x64/
+        path: ${{ github.workspace }}\Release_x64\
+        if-no-files-found: error
