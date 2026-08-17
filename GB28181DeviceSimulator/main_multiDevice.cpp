@@ -244,37 +244,34 @@ int main()//_multiDevice()
         libGB28181Client_Create(&pGB28181Device[i].pDeviceHandle, NULL, __GB28181Device_Callback, &pGB28181Device[i]);
         libGB28181Client_AddAccessNode(pGB28181Device[i].pDeviceHandle, &pGB28181Device[i].accessInfo);
         
-        int channel_num = 10;
+        // 旧代码处替换为下面这一段
+        int channel_num = config.channelNumPerDevice;
+        if (channel_num <= 0) channel_num = 2; // 兼容旧配置，默认 2
         pGB28181Device[i].pChannelMap = new GB28181_DEVICE_CHANNEL_MAP;
-
+        
         for (int j = 0; j < channel_num; j++)
         {
-            GB28181_CHANNEL_T   gb28181Channel;
-            memset(&gb28181Channel, 0x00, sizeof(GB28181_CHANNEL_T));
+            GB28181_CHANNEL_T gb28181Channel;
+            memset(&gb28181Channel, 0x00, sizeof(gb28181Channel));
             gb28181Channel.pGB28181DeviceHandle = &pGB28181Device[i].pDeviceHandle;
-            strcpy(gb28181Channel.url, config.filePath);
-
-            char channelID[64] = { 0 };
-            strcpy(channelID, pGB28181Device[i].accessInfo.deviceID);
-            channelID[10] = '1';
-            channelID[11] = '3';
-            channelID[12] = '1';
-
-            if (channel_num > 1)
-            {
-                int len = (int)strlen(channelID);
-                memset(channelID + len - 4, 0x00, 4);
-                sprintf(channelID + len - 4, "%04d", j + 1);
-            }
-
-            pGB28181Device[i].pChannelMap->insert(GB28181_DEVICE_CHANNEL_MAP::value_type(channelID, gb28181Channel));
-
-
-            GB28181_CHANNEL_INFO_T  channelInfo;
-            memset(&channelInfo, 0x00, sizeof(GB28181_CHANNEL_INFO_T));
-
-            strcpy(channelInfo.channelID, channelID);
-            sprintf(channelInfo.name, "CH%02d", j);
+            // 安全拷贝 filePath
+            strncpy(gb28181Channel.url, config.filePath, sizeof(gb28181Channel.url) - 1);
+        
+            // 更稳健的 channelID 生成方式：deviceID + 4 位序号
+            char channelID[64] = {0};
+            snprintf(channelID, sizeof(channelID), "%s%04d", pGB28181Device[i].accessInfo.deviceID, j + 1);
+        
+            // map 的 key 是 string，显式构造 string 避免隐式问题
+            pGB28181Device[i].pChannelMap->insert(
+                GB28181_DEVICE_CHANNEL_MAP::value_type(std::string(channelID), gb28181Channel)
+            );
+        
+            GB28181_CHANNEL_INFO_T channelInfo;
+            memset(&channelInfo, 0x00, sizeof(channelInfo));
+        
+            // 安全拷贝 channelID/name
+            strncpy(channelInfo.channelID, channelID, sizeof(channelInfo.channelID) - 1);
+            snprintf(channelInfo.name, sizeof(channelInfo.name), "CH%02d", j + 1);
             strcpy(channelInfo.manufacturer, "TSINGSEE");
             strcpy(channelInfo.model, "EasyGBD");
             strcpy(channelInfo.owner, "owner");
@@ -283,7 +280,10 @@ int main()//_multiDevice()
             strcpy(channelInfo.parentID, pGB28181Device[i].accessInfo.deviceID);
             channelInfo.registerWay = 1;
             channelInfo.status = 1;
-            libGB28181Client_AddChannel(pGB28181Device[i].pDeviceHandle, pGB28181Device[i].accessInfo.serverID, &channelInfo, false);
+        
+            libGB28181Client_AddChannel(pGB28181Device[i].pDeviceHandle,
+                                        pGB28181Device[i].accessInfo.serverID,
+                                        &channelInfo, false);
         }
 
         libGB28181Client_Start(pGB28181Device[i].pDeviceHandle);
