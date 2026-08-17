@@ -1,0 +1,45 @@
+name: Build GB28181DeviceSimulator
+
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Build with MSBuild
+      run: |
+        cd GB28181DeviceSimulator
+        msbuild GB28181DeviceSimulator.vcxproj `
+          /p:Configuration=Release `
+          /p:Platform=x64 `
+          /p:OutputPath=..\Release_x64
+
+    - name: Copy runtime DLLs
+      run: |
+        mkdir Release_x64\deps
+        copy libEasyGBD.dll Release_x64\
+        copy libEasyStreamClient.dll Release_x64\
+        copy libEasyAACEncoder.dll Release_x64\
+        copy libeasyrtmp.dll Release_x64\
+        copy Logger.dll Release_x64\
+        copy avcodec-58.dll Release_x64\
+        copy avdevice-58.dll Release_x64\
+        copy avfilter-7.dll Release_x64\
+        copy avformat-58.dll Release_x64\
+        copy avutil-56.dll Release_x64\
+        copy postproc-55.dll Release_x64\
+        copy swresample-3.dll Release_x64\
+        copy swscale-5.dll Release_x64\
+        copy concrt140.dll Release_x64\
+        copy EasyDarwin.mp4 Release_x64\
+        copy GBDeviceInfo.xml Release_x64\
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: EasyGBDSimulator
+        path: Release_x64/
