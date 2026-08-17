@@ -15,7 +15,8 @@ jobs:
 
     - name: Build with MSBuild
       run: |
-        $srcDir = "GB28181DeviceSimulator\GB28181DeviceSimulator"
+        # 源码只在工作区根目录下的一层 GB28181DeviceSimulator 中
+        $srcDir = "GB28181DeviceSimulator"
         
         Push-Location $srcDir
         msbuild GB28181DeviceSimulator.vcxproj `
@@ -27,13 +28,13 @@ jobs:
         }
         Pop-Location
         
-        # MSBuild 实际输出位置（项目默认 x64\Release）
+        # MSBuild 默认输出到 srcDir\x64\Release
         $buildOutDir = Join-Path $srcDir "x64\Release"
         $finalDir = "$env:GITHUB_WORKSPACE\Release_x64"
         
         New-Item -ItemType Directory -Force -Path $finalDir | Out-Null
         
-        # 复制编译产物（注意实际文件名是 EasyGBDSimulator.exe）
+        # 复制编译产物（实际链接器输出名为 EasyGBDSimulator.exe）
         Copy-Item "$buildOutDir\EasyGBDSimulator.exe" $finalDir\ -Force
         if (Test-Path "$buildOutDir\GB28181DeviceSimulator.pdb") {
             Copy-Item "$buildOutDir\GB28181DeviceSimulator.pdb" $finalDir\ -Force
@@ -44,7 +45,7 @@ jobs:
 
     - name: Copy runtime DLLs and configs
       run: |
-        $srcDir = "GB28181DeviceSimulator\GB28181DeviceSimulator"
+        $srcDir = "GB28181DeviceSimulator"
         $outDir = "$env:GITHUB_WORKSPACE\Release_x64"
         
         $dllFiles = @(
