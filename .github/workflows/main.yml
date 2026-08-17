@@ -10,7 +10,6 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    # 新增这一步：自动配置 MSBuild 环境
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
 
@@ -22,25 +21,30 @@ jobs:
           /p:Platform=x64 `
           /p:OutputPath=..\Release_x64
 
-    - name: Copy runtime DLLs
+    - name: Copy runtime DLLs and configs
       run: |
-        mkdir Release_x64\deps
-        copy libEasyGBD.dll Release_x64\
-        copy libEasyStreamClient.dll Release_x64\
-        copy libEasyAACEncoder.dll Release_x64\
-        copy libeasyrtmp.dll Release_x64\
-        copy Logger.dll Release_x64\
-        copy avcodec-58.dll Release_x64\
-        copy avdevice-58.dll Release_x64\
-        copy avfilter-7.dll Release_x64\
-        copy avformat-58.dll Release_x64\
-        copy avutil-56.dll Release_x64\
-        copy postproc-55.dll Release_x64\
-        copy swresample-3.dll Release_x64\
-        copy swscale-5.dll Release_x64\
-        copy concrt140.dll Release_x64\
-        copy EasyDarwin.mp4 Release_x64\
-        copy GBDeviceInfo.xml Release_x64\
+        # 创建输出目录
+        New-Item -ItemType Directory -Force -Path Release_x64
+        
+        # 从 lib 目录复制核心依赖 DLL
+        Copy-Item lib\libEasyGBD.dll Release_x64\
+        Copy-Item lib\libEasyStreamClient.dll Release_x64\
+        Copy-Item lib\libEasyAACEncoder.dll Release_x64\
+        Copy-Item lib\libeasyrtmp.dll Release_x64\
+        Copy-Item lib\Logger.dll Release_x64\
+        
+        # 从根目录复制 FFmpeg 及其他运行时文件
+        Copy-Item avcodec-58.dll Release_x64\
+        Copy-Item avdevice-58.dll Release_x64\
+        Copy-Item avfilter-7.dll Release_x64\
+        Copy-Item avformat-58.dll Release_x64\
+        Copy-Item avutil-56.dll Release_x64\
+        Copy-Item postproc-55.dll Release_x64\
+        Copy-Item swresample-3.dll Release_x64\
+        Copy-Item swscale-5.dll Release_x64\
+        Copy-Item concrt140.dll Release_x64\
+        Copy-Item EasyDarwin.mp4 Release_x64\
+        Copy-Item GBDeviceInfo.xml Release_x64\
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
