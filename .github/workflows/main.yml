@@ -15,30 +15,27 @@ jobs:
 
     - name: Build with MSBuild
       run: |
-        cd GB28181DeviceSimulator
+        # 进入真正的源码目录进行编译
+        cd GB28181DeviceSimulator\GB28181DeviceSimulator
         msbuild GB28181DeviceSimulator.vcxproj `
           /p:Configuration=Release `
           /p:Platform=x64 `
-          /p:OutputPath=..\Release_x64
+          /p:OutputPath=..\..\Release_x64
 
     - name: Copy runtime DLLs and configs
       run: |
-        # 创建输出目录
-        New-Item -ItemType Directory -Force -Path Release_x64
+        $srcDir = "GB28181DeviceSimulator\GB28181DeviceSimulator"
+        $outDir = "Release_x64"
         
-        # 侦察：列出根目录和 lib 目录下的所有文件
-        Write-Host "=== Files in root ==="
-        Get-ChildItem -File | Select-Object Name
-        Write-Host "=== Files in lib ==="
-        if (Test-Path lib) { Get-ChildItem lib -File | Select-Object Name } else { Write-Host "lib directory not found" }
+        New-Item -ItemType Directory -Force -Path $outDir
         
-        # 尝试从常见位置复制 DLL，找不到就跳过不报错
+        # 复制所有运行时依赖 DLL
         $dllFiles = @(
-            "lib\libEasyGBD.dll",
-            "lib\libEasyStreamClient.dll",
-            "lib\libEasyAACEncoder.dll",
-            "lib\libeasyrtmp.dll",
-            "lib\Logger.dll",
+            "libEasyGBD.dll",
+            "libEasyStreamClient.dll",
+            "libEasyAACEncoder.dll",
+            "libeasyrtmp.dll",
+            "Logger.dll",
             "avcodec-58.dll",
             "avdevice-58.dll",
             "avfilter-7.dll",
@@ -51,18 +48,18 @@ jobs:
         )
         
         foreach ($dll in $dllFiles) {
-            if (Test-Path $dll) {
-                Copy-Item $dll Release_x64\ -Force
+            $fullPath = Join-Path $srcDir $dll
+            if (Test-Path $fullPath) {
+                Copy-Item $fullPath $outDir\ -Force
                 Write-Host "Copied: $dll"
             } else {
-                Write-Host "WARNING: $dll not found, skipping"
+                Write-Host "WARNING: $dll not found"
             }
         }
         
-        # 复制配置文件
-        if (Test-Path EasyDarwin.mp4) { Copy-Item EasyDarwin.mp4 Release_x64\ }
-        if (Test-Path GBDeviceInfo.xml) { Copy-Item GBDeviceInfo.xml Release_x64\ }    
-
+        # 复制配置和视频文件
+        Copy-Item "$srcDir\EasyDarwin.mp4" $outDir\ -Force
+        Copy-Item "$srcDir\GB28181Device.xml" $outDir\ -Force
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
