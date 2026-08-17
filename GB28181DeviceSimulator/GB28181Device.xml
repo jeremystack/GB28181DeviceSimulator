@@ -11,5 +11,6 @@
     <MaxHeartbeatCount>3</MaxHeartbeatCount>						<!--最大心跳次数-->
     <SipProtocol>UDP</SipProtocol>											<!--注册协议 TCP or UDP-->
     <DeviceNum>20</DeviceNum>													<!--要模拟的设备数量-->
+    <channelNumPerDevice>4</channelNumPerDevice>                       <!--要模拟的单个设备通道数量-->
     <FilePath>EasyDarwin.mp4</FilePath>									<!--媒体文件-->
 </XMLConfig>
