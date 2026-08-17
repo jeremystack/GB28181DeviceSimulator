@@ -1,0 +1,19 @@
+name: Explore Repo Structure
+
+on: [push, workflow_dispatch]
+
+jobs:
+  explore:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive  # 尝试拉取子模块
+
+    - name: List all files recursively
+      run: |
+        Write-Host "=== Current Directory ==="
+        Get-Location
+        Write-Host "`n=== All Files in Workspace ==="
+        Get-ChildItem -Recurse -File | Select-Object FullName, Length | Format-Table -AutoSize
