@@ -26,25 +26,43 @@ jobs:
         # 创建输出目录
         New-Item -ItemType Directory -Force -Path Release_x64
         
-        # 从 lib 目录复制核心依赖 DLL
-        Copy-Item lib\libEasyGBD.dll Release_x64\
-        Copy-Item lib\libEasyStreamClient.dll Release_x64\
-        Copy-Item lib\libEasyAACEncoder.dll Release_x64\
-        Copy-Item lib\libeasyrtmp.dll Release_x64\
-        Copy-Item lib\Logger.dll Release_x64\
+        # 侦察：列出根目录和 lib 目录下的所有文件
+        Write-Host "=== Files in root ==="
+        Get-ChildItem -File | Select-Object Name
+        Write-Host "=== Files in lib ==="
+        if (Test-Path lib) { Get-ChildItem lib -File | Select-Object Name } else { Write-Host "lib directory not found" }
         
-        # 从根目录复制 FFmpeg 及其他运行时文件
-        Copy-Item avcodec-58.dll Release_x64\
-        Copy-Item avdevice-58.dll Release_x64\
-        Copy-Item avfilter-7.dll Release_x64\
-        Copy-Item avformat-58.dll Release_x64\
-        Copy-Item avutil-56.dll Release_x64\
-        Copy-Item postproc-55.dll Release_x64\
-        Copy-Item swresample-3.dll Release_x64\
-        Copy-Item swscale-5.dll Release_x64\
-        Copy-Item concrt140.dll Release_x64\
-        Copy-Item EasyDarwin.mp4 Release_x64\
-        Copy-Item GBDeviceInfo.xml Release_x64\
+        # 尝试从常见位置复制 DLL，找不到就跳过不报错
+        $dllFiles = @(
+            "lib\libEasyGBD.dll",
+            "lib\libEasyStreamClient.dll",
+            "lib\libEasyAACEncoder.dll",
+            "lib\libeasyrtmp.dll",
+            "lib\Logger.dll",
+            "avcodec-58.dll",
+            "avdevice-58.dll",
+            "avfilter-7.dll",
+            "avformat-58.dll",
+            "avutil-56.dll",
+            "postproc-55.dll",
+            "swresample-3.dll",
+            "swscale-5.dll",
+            "concrt140.dll"
+        )
+        
+        foreach ($dll in $dllFiles) {
+            if (Test-Path $dll) {
+                Copy-Item $dll Release_x64\ -Force
+                Write-Host "Copied: $dll"
+            } else {
+                Write-Host "WARNING: $dll not found, skipping"
+            }
+        }
+        
+        # 复制配置文件
+        if (Test-Path EasyDarwin.mp4) { Copy-Item EasyDarwin.mp4 Release_x64\ }
+        if (Test-Path GBDeviceInfo.xml) { Copy-Item GBDeviceInfo.xml Release_x64\ }    
+
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
