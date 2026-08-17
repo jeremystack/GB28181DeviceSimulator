@@ -25,6 +25,7 @@ public:
 		int			maxHeartbeatCount;
 		int			sipProtocol;			//1(TCP)	2(UDP)
 		char		filePath[260];
+        int channelNumPerDevice;
 	}XML_CONFIG_T;
 
 public:
