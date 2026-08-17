@@ -7,8 +7,8 @@
 typedef struct __GB28181_CHANNEL_T
 {
     char            url[1024];
-    Easy_Handle     streamHandle;                   // À­Á÷¾ä±ú
-    void* pusherHandle;                             // GB28181ÍÆÁ÷¾ä±ú
+    Easy_Handle     streamHandle;                   // æ‹‰æµå¥æŸ„
+    void* pusherHandle;                             // GB28181æŽ¨æµå¥æŸ„
 
     GB28181_CLIENT_HANDLE* pGB28181DeviceHandle;
 }GB28181_CHANNEL_T;
@@ -19,7 +19,7 @@ typedef struct __GB28181_DEVICE_T
 {
     GB28181CLIENT_ACCESS_INFO_T     accessInfo;
 
-    GB28181_CLIENT_HANDLE pDeviceHandle;            // GB28181Éè±¸¶Ë¾ä±ú
+    GB28181_CLIENT_HANDLE pDeviceHandle;            // GB28181è®¾å¤‡ç«¯å¥æŸ„
     GB28181_DEVICE_CHANNEL_MAP* pChannelMap;
 }GB28181_DEVICE_T;
 
@@ -106,10 +106,10 @@ int OpenStream(GB28181_CHANNEL_T* pChannel)
     }
 #else
 
-    // ´´½¨¶ÁÊÓÆµÎÄ¼þÏß³Ì
+    // åˆ›å»ºè¯»è§†é¢‘æ–‡ä»¶çº¿ç¨‹
     CreateOSThread(&pChannel->readVideoFileThread, __ReadVideoFileThread, (void*)pChannel, 0);
 
-    // ´´½¨¶ÁÒôÆµÎÄ¼þÏß³Ì
+    // åˆ›å»ºè¯»éŸ³é¢‘æ–‡ä»¶çº¿ç¨‹
     CreateOSThread(&pChannel->readAudioFileThread, __ReadAudioFileThread, (void*)pChannel, 0);
 #endif
     return 0;
@@ -123,8 +123,8 @@ void CloseStream(GB28181_CHANNEL_T* pChannel)
         pChannel->streamHandle = NULL;
     }
 #else
-    DeleteOSThread(&pChannel->readVideoFileThread);				// ¹Ø±Õ¶ÁÊÓÆµÎÄ¼þÏß³Ì
-    DeleteOSThread(&pChannel->readAudioFileThread);				// ¹Ø±Õ¶ÁÒôÆµÎÄ¼þÏß³Ì
+    DeleteOSThread(&pChannel->readVideoFileThread);				// å…³é—­è¯»è§†é¢‘æ–‡ä»¶çº¿ç¨‹
+    DeleteOSThread(&pChannel->readAudioFileThread);				// å…³é—­è¯»éŸ³é¢‘æ–‡ä»¶çº¿ç¨‹
 
 #endif
 }
@@ -136,50 +136,50 @@ int __GB28181Device_Callback(void* userptr, GB28181_CLIENT_CALLBACK_TYPE_ENUM ty
 
     if (type == GB28181_DEVICE_EVENT_CONNECTING)
     {
-        printf("%s line[%d] Á¬½ÓÖÐ....[%s --> %s]\n", __FUNCTION__, __LINE__, pDevice->accessInfo.deviceID, serverID);
+        printf("%s line[%d] è¿žæŽ¥ä¸­....[%s --> %s]\n", __FUNCTION__, __LINE__, pDevice->accessInfo.deviceID, serverID);
     }
     else if (type == GB28181_DEVICE_EVENT_REGISTER_ING)
     {
         if (size > 0)
         {
-            printf("%s line[%d] ×¢²áÖÐ....[%s --> %s]\n", __FUNCTION__, __LINE__, pDevice->accessInfo.deviceID, serverID);
+            printf("%s line[%d] æ³¨å†Œä¸­....[%s --> %s]\n", __FUNCTION__, __LINE__, pDevice->accessInfo.deviceID, serverID);
         }
         else
         {
-            printf("%s line[%d] ×¢Ïú....[%s --> %s]\n", __FUNCTION__, __LINE__, pDevice->accessInfo.deviceID, serverID);
+            printf("%s line[%d] æ³¨é”€....[%s --> %s]\n", __FUNCTION__, __LINE__, pDevice->accessInfo.deviceID, serverID);
         }
     }
     else if (type == GB28181_DEVICE_EVENT_REGISTER_TIMEOUT)
     {
-        printf("%s line[%d] ×¢²á³¬Ê±....[%s]\n", __FUNCTION__, __LINE__, serverID);
+        printf("%s line[%d] æ³¨å†Œè¶…æ—¶....[%s]\n", __FUNCTION__, __LINE__, serverID);
     }
     else if (type == GB28181_DEVICE_EVENT_REGISTER_OK)
     {
-        printf("%s line[%d] ×¢²á³É¹¦....[%s --> %s]\n", __FUNCTION__, __LINE__, pDevice->accessInfo.deviceID, serverID);
+        printf("%s line[%d] æ³¨å†ŒæˆåŠŸ....[%s --> %s]\n", __FUNCTION__, __LINE__, pDevice->accessInfo.deviceID, serverID);
     }
     else if (type == GB28181_DEVICE_EVENT_REGISTER_AUTH_FAIL)
     {
-        printf("%s line[%d] ÑéÖ¤Ê§°Ü....[%s --> %s]\n", __FUNCTION__, __LINE__, pDevice->accessInfo.deviceID, serverID);
+        printf("%s line[%d] éªŒè¯å¤±è´¥....[%s --> %s]\n", __FUNCTION__, __LINE__, pDevice->accessInfo.deviceID, serverID);
     }
     else if (type == GB28181_DEVICE_EVENT_DISCONNECT)
     {
-        printf("%s line[%d] ÒÑ¶Ï¿ªÁ¬½Ó....[%s --> %s]\n", __FUNCTION__, __LINE__, pDevice->accessInfo.deviceID, serverID);
+        printf("%s line[%d] å·²æ–­å¼€è¿žæŽ¥....[%s --> %s]\n", __FUNCTION__, __LINE__, pDevice->accessInfo.deviceID, serverID);
     }
     else if (type == GB28181_DEVICE_EVENT_START_AUDIO_VIDEO)
     {
-        printf("%s line[%d] ²¥·ÅÒôÊÓÆµ channelID[%s - %s]....\n", __FUNCTION__, __LINE__, serverID, channelID);
+        printf("%s line[%d] æ’­æ”¾éŸ³è§†é¢‘ channelID[%s - %s]....\n", __FUNCTION__, __LINE__, serverID, channelID);
 
         GB28181_DEVICE_CHANNEL_MAP::iterator it = pDevice->pChannelMap->find(channelID);
         if (it != pDevice->pChannelMap->end())
         {
-            it->second.pusherHandle = ext;              // ´ËÊ±extÎªpusherHandle;
+            it->second.pusherHandle = ext;              // æ­¤æ—¶extä¸ºpusherHandle;
 
             OpenStream(&it->second);
         }
     }
     else if (type == GB28181_DEVICE_EVENT_STOP_AUDIO_VIDEO)
     {
-        printf("%s line[%d] Í£Ö¹ÒôÊÓÆµ channelID[%s - %s]....\n", __FUNCTION__, __LINE__, serverID, channelID);
+        printf("%s line[%d] åœæ­¢éŸ³è§†é¢‘ channelID[%s - %s]....\n", __FUNCTION__, __LINE__, serverID, channelID);
 
         GB28181_DEVICE_CHANNEL_MAP::iterator it = pDevice->pChannelMap->find(channelID);
         if (it != pDevice->pChannelMap->end())
@@ -212,7 +212,7 @@ int main()//_multiDevice()
     GB28181_DEVICE_T* pGB28181Device = new GB28181_DEVICE_T[device_num];
     if (NULL == pGB28181Device)		return 0;
 
-    printf("¹²[%d]¸öÉè±¸.\n", device_num);
+    printf("å…±[%d]ä¸ªè®¾å¤‡.\n", device_num);
 
     int IncId = 0;
     char deviceID[64] = { 0 };
@@ -244,7 +244,7 @@ int main()//_multiDevice()
         libGB28181Client_Create(&pGB28181Device[i].pDeviceHandle, NULL, __GB28181Device_Callback, &pGB28181Device[i]);
         libGB28181Client_AddAccessNode(pGB28181Device[i].pDeviceHandle, &pGB28181Device[i].accessInfo);
         
-        int channel_num = 2;
+        int channel_num = 10;
         pGB28181Device[i].pChannelMap = new GB28181_DEVICE_CHANNEL_MAP;
 
         for (int j = 0; j < channel_num; j++)
@@ -290,7 +290,7 @@ int main()//_multiDevice()
     }
 
 
-    printf("\n\n\n°´Èý´ÎEnter¼üÍË³ö...\n\n\n");
+    printf("\n\n\næŒ‰ä¸‰æ¬¡Enteré”®é€€å‡º...\n\n\n");
     getchar();
     getchar();
     getchar();
